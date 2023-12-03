@@ -22,6 +22,7 @@ export class AudioUI extends Component {
     public audioName: string = "";
 
     start() {
+        AudioMgr.instance.Init();
         this.node.on(Input.EventType.MOUSE_DOWN, this.Click, this);
     }
 

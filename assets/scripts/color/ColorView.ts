@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Color, Label, Button, Sprite, input, Input, color, game, Game } from 'cc';
+import { _decorator, Component, Node, Color, Label, Button, Sprite, input, Input, color, game, Game, debug } from 'cc';
 import { Connect } from '../Tools/Connect';
 import { ColorManage } from './ColorManage';
 const { ccclass, property } = _decorator;
@@ -37,7 +37,7 @@ export class ColorView extends Component {
     //返回主页按钮
     @property(Node)
     public returnMainBtn: Node;
-
+    //当前时间
     private nowTime = 60;
     private allTime = 60;
 
@@ -98,44 +98,52 @@ export class ColorView extends Component {
     public AddUIEventListener(): void {
         for (let index = 0; index < this.btnArray.length; index++) {
             const element = this.btnArray[index];
-            element.on(Input.EventType.MOUSE_UP, () => {
+            element.on(Input.EventType.TOUCH_END, () => {
                 this.ClickBtn(index);
             }, this);
         }
-        this.returnMainBtn.on(Input.EventType.MOUSE_UP, this.ReturnMainView, this)
+        this.returnMainBtn.on(Input.EventType.TOUCH_END, this.ReturnMainView, this)
     }
-
-    //更新页面
-    private RefreshView() {
+    /**
+     * 更新页面
+     * @param isDiff 是否困难 
+     */
+    private RefreshView(isDiff?) {
         //当前显示
         this.nowOption = ColorManage.getInstance.RandomColorIndex();
         //可选择选项
-        this.selectOptions = ColorManage.getInstance.GetOptions(this.nowOption);
+        // this.selectOptions = ColorManage.getInstance.GetOptions(this.nowOption);
         //显示内容
-        this.ShowContentSprite(this.nowOption);
+        this.ShowContentSprite(this.nowOption, this.contentSprit);
         //显示选择按钮
-        this.ShowOptionLabel();
+        this.ShowOptionLabel(isDiff);
     }
     //显示内容
-    private ShowContentSprite(index: number) {
+    private ShowContentSprite(index: number, sprite: Sprite) {
         var color = ColorManage.getInstance.GetColorByIndex(index);
-        if (this.contentSprit) {
-            this.contentSprit.color = color;
+        if (sprite) {
+            sprite.color = color;
         }
-
     }
     //显示选择按钮
-    private ShowOptionLabel() {
+    private ShowOptionLabel(isDiff) {
         //得到三个选项                
         this.selectOptions = ColorManage.getInstance.GetOptions(this.nowOption);
         for (let index = 0; index < this.labelArray.length; index++) {
             const element: Label = this.labelArray[index];
-            //下标
+            const btnSprite = this.btnArray[index].getComponent(Sprite);//图片
+            //正确的下标
             var textIndex = this.selectOptions[index];
             //文本
             var text = ColorManage.getInstance.allOptionText[textIndex];
             if (text != null) {
                 element.string = text;
+            }
+
+            if (isDiff) {
+                //如果困难模式
+                var i = this.selectOptions[2-index]
+                this.ShowContentSprite(i, btnSprite);
             }
         }
     }
@@ -153,8 +161,14 @@ export class ColorView extends Component {
                 this.GameOver();
             }
         }
-        //更新页面
-        this.RefreshView();
+        if (this.nowTime < 30) {
+            //现在时间少于30了，加大难度
+            this.RefreshView(true);
+        } else {
+            //更新页面
+            this.RefreshView(false);
+        }
+
     }
 
     /***
